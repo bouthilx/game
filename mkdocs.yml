@@ -1,0 +1,45 @@
+site_name: Jeux Papa - Documentation
+site_description: Documentation pour le jeu RPG 2D Jeux Papa
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: amber
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+
+nav:
+  - Accueil: index.md
+  - Design:
+    - Vue d'ensemble: design/index.md
+    - Système de Combat: design/combat.md
+    - Joueur Principal: design/player.md
+    - Ennemis: design/enemies.md
+    - Équipement: design/equipment.md
+    - Environnement: design/environment.md
+    - Progression: design/progression.md
+  - API:
+    - Architecture: api/index.md
+    - Moteur de Jeu: api/engine.md
+    - Système d'Entités: api/entities.md
+    - Système de Monde: api/world.md
+
+markdown_extensions:
+  - codehilite
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - tables
+
+docs_dir: docs
+site_dir: site
