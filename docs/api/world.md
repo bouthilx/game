@@ -512,4 +512,78 @@ Check if a point is inside this object.
 
 Render the object sprite.
 
+---\n\n\n<!-- AUTO-GENERATED: Ne pas éditer manuellement -->\n\n### Module: bitmap_map\n\n### BitmapMap
+
+#### Méthodes
+
+##### **__init__**(self: , map_path: str, tile_size: int)
+
+##### **find_safe_spawn_position**(self: ) → Tuple[float, float]
+
+Find a safe spawn position after objects are loaded.
+
+##### **is_player_spawn_safe**(self: , x: float, y: float, player_width: int, player_height: int) → bool
+
+Check if a player-sized rectangle can be safely placed at this position.
+
+##### **get_tile_at_pixel**(self: , world_x: float, world_y: float) → TileType
+
+##### **get_tile_at_grid**(self: , tile_x: int, tile_y: int) → TileType
+
+##### **is_walkable**(self: , world_x: float, world_y: float) → bool
+
+##### **get_objects_at_point**(self: , world_x: float, world_y: float) → List[GameObject]
+
+Get all objects that contain the given point.
+
+##### **get_objects_in_area**(self: , x: float, y: float, width: float, height: float) → List[GameObject]
+
+Get all objects that intersect with the given area.
+
+##### **get_world_size**(self: ) → Tuple[int, int]
+
+##### **render_terrain**(self: , screen: pygame.Surface, camera_x: float, camera_y: float)
+
+Render only the terrain layer.
+
+##### **render_objects**(self: , screen: pygame.Surface, camera_x: float, camera_y: float)
+
+Render only the objects layer.
+
+##### **render**(self: , screen: pygame.Surface, camera_x: float, camera_y: float)
+
+Render terrain and objects (for backward compatibility).
+
+---\n\n### Module: object_types\n\n### ObjectType
+
+#### Méthodes
+
+##### **__init__**(self: , name: str, size: Tuple[int, int], sprite_path: str, walkable: bool)
+
+---\n\n### Module: tile_types\n\n### TileType
+
+#### Méthodes
+
+##### **__init__**(self: , name: str, walkable: bool, color: Tuple[int, int, int])
+
+---\n\n### Module: game_object\n\n### GameObject
+
+#### Méthodes
+
+##### **__init__**(self: , name: str, x: float, y: float, width: int, height: int, sprite_path: str, walkable: bool)
+
+##### **rect**(self: ) → pygame.Rect
+
+##### **get_tile_coverage**(self: , tile_size: int) → list[Tuple[int, int]]
+
+Get list of tile coordinates this object covers.
+
+##### **is_point_inside**(self: , x: float, y: float) → bool
+
+Check if a point is inside this object.
+
+##### **render**(self: , screen: pygame.Surface, camera_x: float, camera_y: float)
+
+Render the object sprite.
+
 ---\n\n

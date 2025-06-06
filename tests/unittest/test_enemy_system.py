@@ -2,7 +2,7 @@ import pytest
 import pygame
 from unittest.mock import Mock
 
-from game.entities.enemy import Enemy, Goblin
+from game.entities.enemy import Enemy, Goblin, Ogre
 from game.entities.player import Player
 
 
@@ -14,6 +14,7 @@ class TestEnemySystem:
         pygame.init()
         self.enemy = Enemy(100, 100)
         self.goblin = Goblin(200, 200)
+        self.ogre = Ogre(300, 300)
         self.player = Player(150, 150)
     
     def teardown_method(self):
@@ -39,6 +40,18 @@ class TestEnemySystem:
         assert self.goblin.experience_value == 15
         assert self.goblin.width == 24  # Plus petit
         assert self.goblin.height == 24
+
+    def test_ogre_specialized_attributes(self):
+        """L'ogre a des stats de tank."""
+        assert self.ogre.health == 100
+        assert self.ogre.max_health == 100
+        assert self.ogre.speed == 30.0  # Plus lent
+        assert self.ogre.attack_damage == 20  # Plus de dégâts
+        assert self.ogre.experience_value == 100  # Beaucoup d'XP
+        assert self.ogre.width == 64  # 2x plus gros
+        assert self.ogre.height == 64
+        assert self.ogre.detection_radius == 120  # Meilleure détection
+        assert self.ogre.attack_range == 50  # Plus grande portée
 
     def test_take_damage(self):
         """Test du système de dégâts."""
@@ -223,7 +236,8 @@ class TestPlayerEnemyInteraction:
         """Setup pour chaque test."""
         pygame.init()
         self.player = Player(100, 100)
-        self.enemies = [Goblin(150, 100), Goblin(200, 100)]
+        # Use Ogre for damage tests since it has more health (100) than player damage (30)
+        self.enemies = [Ogre(150, 100), Goblin(200, 100)]
     
     def teardown_method(self):
         """Cleanup après chaque test."""
@@ -273,5 +287,5 @@ class TestPlayerEnemyInteraction:
         
         # Santé ne devrait pas avoir changé au deuxième appel
         assert health_after_first == health_after_second
-        assert health_after_first == initial_health - self.player.attack_damage
+        assert health_after_first == initial_health - self.player.get_attack_damage()
         assert xp2 == 0  # Pas d'XP supplémentaire

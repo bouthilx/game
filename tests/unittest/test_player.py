@@ -113,10 +113,12 @@ class TestPlayer:
             pygame.K_d: False,
             pygame.K_w: False,
             pygame.K_s: False,
+            pygame.K_SPACE: False,
+            pygame.K_e: False,
         }
 
         player = Player()
-        player.handle_input()
+        player.handle_input(0)
 
         assert player.velocity_x == 0
         assert player.velocity_y == 0

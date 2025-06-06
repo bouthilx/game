@@ -446,4 +446,136 @@ Inflige des dégâts aux ennemis touchés. Retourne l'XP gagnée.
 
 ##### **render**(self: , screen: pygame.Surface)
 
+---\n\n\n<!-- AUTO-GENERATED: Ne pas éditer manuellement -->\n\n### Module: enemy\n\n### Enemy
+
+**Hérite de**: Entity
+
+Classe de base pour tous les ennemis.
+
+#### Méthodes
+
+##### **__init__**(self: , x: float, y: float, width: int, height: int)
+
+##### **take_damage**(self: , damage: int) → bool
+
+Prend des dégâts. Retourne True si l'ennemi meurt.
+
+##### **can_attack**(self: , current_time: float) → bool
+
+Vérifie si l'ennemi peut attaquer.
+
+##### **distance_to_target**(self: ) → float
+
+Calcule la distance au joueur cible.
+
+##### **move_towards_target**(self: , dt: float)
+
+Déplace l'ennemi vers sa cible.
+
+##### **update_ai**(self: , dt: float, current_time: float)
+
+Met à jour l'IA de l'ennemi.
+
+##### **attack_target**(self: , current_time: float)
+
+Attaque le joueur cible.
+
+##### **check_collision_with_attack**(self: , attack_rect: pygame.Rect) → bool
+
+Vérifie si l'ennemi est touché par une attaque.
+
+##### **update**(self: , dt: float, current_time: float)
+
+Met à jour l'ennemi.
+
+##### **render**(self: , screen: pygame.Surface)
+
+Affiche l'ennemi.
+
+### Goblin
+
+**Hérite de**: Enemy
+
+Ennemi Gobelin - rapide avec peu de vie.
+
+#### Méthodes
+
+##### **__init__**(self: , x: float, y: float)
+
+---\n\n### Module: player\n\n### Player
+
+**Hérite de**: Entity
+
+#### Méthodes
+
+##### **__init__**(self: , x: float, y: float)
+
+##### **handle_input**(self: , current_time: float)
+
+##### **handle_weapon_switch**(self: , key: )
+
+Gère le changement d'arme avec les touches numériques.
+
+##### **take_damage**(self: , damage: int)
+
+##### **heal**(self: , amount: int)
+
+##### **gain_experience**(self: , amount: int)
+
+##### **level_up**(self: )
+
+##### **get_attack_damage**(self: ) → int
+
+Calcule les dégâts d'attaque en fonction de l'arme équipée.
+
+##### **equip_weapon**(self: , weapon: )
+
+Équipe une arme.
+
+##### **add_to_inventory**(self: , item: )
+
+Ajoute un objet à l'inventaire.
+
+##### **can_attack**(self: , current_time: float) → bool
+
+##### **start_attack**(self: , current_time: float)
+
+##### **get_attack_rect**(self: ) → pygame.Rect
+
+Get the rectangle representing the attack area.
+
+##### **update_attack_state**(self: , current_time: float)
+
+Update attack animation state.
+
+##### **check_attack_hits**(self: , enemies: list) → list
+
+Vérifie si l'attaque touche des ennemis. Retourne la liste des ennemis touchés.
+
+##### **deal_damage_to_enemies**(self: , enemies: list) → int
+
+Inflige des dégâts aux ennemis touchés. Retourne l'XP gagnée.
+
+##### **can_move_to**(self: , x: float, y: float, game_map: ) → bool
+
+##### **update**(self: , dt: float, game_map: , current_time: float)
+
+##### **render**(self: , screen: pygame.Surface)
+
+---\n\n### Module: entity\n\n### Entity
+
+#### Méthodes
+
+##### **__init__**(self: , x: float, y: float, width: int, height: int)
+
+##### **position**(self: ) → Tuple[float, float]
+
+##### **position**(self: , pos: Tuple[float, float])
+
+##### **rect**(self: ) → pygame.Rect
+
+##### **update**(self: , dt: float)
+
+##### **render**(self: , screen: pygame.Surface)
+
 ---\n\n

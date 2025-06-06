@@ -20,13 +20,14 @@ class TestPlayerCombat:
 
     def test_player_has_combat_attributes(self):
         """Le joueur a tous les attributs de combat."""
-        assert hasattr(self.player, 'attack_damage')
+        assert hasattr(self.player, 'base_attack_damage')
         assert hasattr(self.player, 'attack_range')
         assert hasattr(self.player, 'attack_cooldown')
         assert hasattr(self.player, 'facing_direction')
         assert hasattr(self.player, 'is_attacking')
         
-        assert self.player.attack_damage == 20
+        # Player now has equipment system so total damage includes weapon
+        assert self.player.get_attack_damage() == 30  # 10 base + 20 from BasicSword
         assert self.player.attack_range == 40
         assert self.player.attack_cooldown == 0.5
         assert self.player.facing_direction == "down"

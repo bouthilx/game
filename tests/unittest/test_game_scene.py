@@ -132,8 +132,8 @@ class TestGameScene:
 
             scene.update(0.016)
 
-            # Player update should be called
-            mock_player_update.assert_called_once_with(0.016, scene.game_map)
+            # Player update should be called with current_time and chest_manager parameters
+            mock_player_update.assert_called_once_with(0.016, scene.game_map, 0.016, scene.chest_manager)
 
             # Camera should follow player
             assert scene.camera_x == scene.player.x - 400  # screen_width // 2

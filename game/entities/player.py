@@ -1,6 +1,8 @@
 import pygame
 
 from game.entities.entity import Entity
+from game.equipment.inventory import Inventory
+from game.equipment.weapon import BasicSword, SteelSword, LegendarySword
 
 
 class Player(Entity):
@@ -13,8 +15,23 @@ class Player(Entity):
         self.experience = 0
         self.experience_to_next_level = 100
         
+        # Equipment and inventory system
+        self.inventory = Inventory(max_size=20)
+        self.base_attack_damage = 10  # Dégâts de base sans arme
+        
+        # Ajouter différentes épées à l'inventaire pour tester
+        basic_sword = BasicSword()
+        steel_sword = SteelSword()
+        legendary_sword = LegendarySword()
+        
+        self.inventory.add_item(basic_sword)
+        self.inventory.add_item(steel_sword)
+        self.inventory.add_item(legendary_sword)
+        
+        # Équiper l'épée de base au démarrage
+        self.inventory.equip_weapon(basic_sword)
+        
         # Combat system
-        self.attack_damage = 20
         self.attack_range = 40
         self.attack_cooldown = 0.5  # seconds
         self.last_attack_time = -1  # Initialize to -1 so first attack works
@@ -24,7 +41,7 @@ class Player(Entity):
         self.attack_start_time = 0
         self.enemies_hit_this_attack = set()  # Track enemies hit in current attack
 
-    def handle_input(self, current_time: float):
+    def handle_input(self, current_time: float, chest_manager=None):
         keys = pygame.key.get_pressed()
 
         # Movement input
@@ -47,6 +64,21 @@ class Player(Entity):
         # Attack input
         if keys[pygame.K_SPACE] and self.can_attack(current_time):
             self.start_attack(current_time)
+        
+        # Chest interaction input
+        if keys[pygame.K_e] and chest_manager:
+            self.try_interact_with_chest(chest_manager)
+
+    def handle_weapon_switch(self, key):
+        """Gère le changement d'arme avec les touches numériques."""
+        weapons = self.inventory.get_weapons()
+        
+        if key == pygame.K_1 and len(weapons) >= 1:
+            self.inventory.equip_weapon(weapons[0])
+        elif key == pygame.K_2 and len(weapons) >= 2:
+            self.inventory.equip_weapon(weapons[1])
+        elif key == pygame.K_3 and len(weapons) >= 3:
+            self.inventory.equip_weapon(weapons[2])
 
     def take_damage(self, damage: int):
         self.health = max(0, self.health - damage)
@@ -66,6 +98,35 @@ class Player(Entity):
         self.max_health += 10
         self.health = self.max_health
         self.experience_to_next_level = int(self.experience_to_next_level * 1.5)
+
+    def get_attack_damage(self) -> int:
+        """Calcule les dégâts d'attaque en fonction de l'arme équipée."""
+        equipped_weapon = self.inventory.get_equipped_weapon()
+        if equipped_weapon:
+            return self.base_attack_damage + equipped_weapon.damage
+        return self.base_attack_damage
+
+    def equip_weapon(self, weapon):
+        """Équipe une arme."""
+        return self.inventory.equip_weapon(weapon)
+
+    def add_to_inventory(self, item):
+        """Ajoute un objet à l'inventaire."""
+        return self.inventory.add_item(item)
+
+    def try_interact_with_chest(self, chest_manager):
+        """Essaie d'interagir avec un coffre proche."""
+        # Utiliser le centre du joueur pour l'interaction
+        player_center_x = self.x + self.width / 2
+        player_center_y = self.y + self.height / 2
+        
+        chest = chest_manager.find_interactable_chest(player_center_x, player_center_y)
+        if chest:
+            loot_received = chest.open(self)
+            if loot_received:
+                # Retourner les objets reçus pour l'affichage dans l'UI
+                return loot_received
+        return []
 
     def can_attack(self, current_time: float) -> bool:
         return current_time - self.last_attack_time >= self.attack_cooldown
@@ -129,8 +190,9 @@ class Player(Entity):
             if id(enemy) not in self.enemies_hit_this_attack:
                 self.enemies_hit_this_attack.add(id(enemy))
                 
-                # Infliger dégâts
-                enemy_died = enemy.take_damage(self.attack_damage)
+                # Infliger dégâts basés sur l'arme équipée
+                damage = self.get_attack_damage()
+                enemy_died = enemy.take_damage(damage)
                 
                 # Si l'ennemi meurt, gagner de l'XP
                 if enemy_died:
@@ -152,8 +214,8 @@ class Player(Entity):
                 return False
         return True
 
-    def update(self, dt: float, game_map=None, current_time: float = 0):
-        self.handle_input(current_time)
+    def update(self, dt: float, game_map=None, current_time: float = 0, chest_manager=None):
+        self.handle_input(current_time, chest_manager)
         self.update_attack_state(current_time)
 
         if game_map:

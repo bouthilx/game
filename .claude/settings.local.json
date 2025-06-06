@@ -6,7 +6,10 @@
       "Bash(python:*)",
       "Bash(uv sync:*)",
       "Bash(uv pip list:*)",
-      "Bash(uv add:*)"
+      "Bash(uv add:*)",
+      "Bash(timeout 5 uv run:*)",
+      "Bash(timeout 3s uv run:*)",
+      "Bash(timeout 5s uv run:*)"
     ],
     "deny": []
   }

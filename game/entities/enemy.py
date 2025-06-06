@@ -158,21 +158,23 @@ class Enemy(Entity):
         
         pygame.draw.rect(screen, color, self.rect)
         
-        # Barre de vie
+        # Barre de vie (adaptée à la taille de l'ennemi)
         if self.health < self.max_health:
-            health_bar_width = 30
-            health_bar_height = 4
+            health_bar_width = max(30, self.width)  # Au moins 30px, sinon largeur de l'ennemi
+            health_bar_height = 6 if self.width > 32 else 4  # Plus grosse barre pour gros ennemis
             health_percentage = self.health / self.max_health
             
+            # Centrer la barre de vie au-dessus de l'ennemi
+            bar_x = self.x + (self.width - health_bar_width) // 2
+            bar_y = self.y - health_bar_height - 4
+            
             # Fond rouge
-            health_bg = pygame.Rect(
-                self.x, self.y - 8, health_bar_width, health_bar_height
-            )
+            health_bg = pygame.Rect(bar_x, bar_y, health_bar_width, health_bar_height)
             pygame.draw.rect(screen, (100, 0, 0), health_bg)
             
             # Barre verte
             health_fill = pygame.Rect(
-                self.x, self.y - 8, 
+                bar_x, bar_y, 
                 int(health_bar_width * health_percentage), health_bar_height
             )
             pygame.draw.rect(screen, (0, 255, 0), health_fill)
@@ -194,3 +196,23 @@ class Goblin(Enemy):
         
         # Couleur spécifique
         self.color = (100, 255, 100)  # Vert pour gobelin
+
+
+class Ogre(Enemy):
+    """Ennemi Ogre - très résistant et plus gros."""
+    
+    def __init__(self, x: float, y: float):
+        super().__init__(x, y, 64, 64)  # 2x plus gros (64x64 vs 32x32)
+        
+        # Stats spécifiques à l'ogre
+        self.health = 100
+        self.max_health = 100
+        self.speed = 30.0  # Plus lent que les autres
+        self.attack_damage = 20  # Dégâts élevés
+        self.experience_value = 100  # Beaucoup d'XP
+        self.attack_cooldown = 1.5  # Attaque plus lentement
+        self.detection_radius = 120  # Détection légèrement meilleure
+        self.attack_range = 50  # Portée d'attaque plus grande
+        
+        # Couleur spécifique
+        self.color = (200, 100, 100)  # Rouge-brun pour ogre

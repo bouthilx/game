@@ -345,4 +345,58 @@ while running:
 
 ##### **render**(self: , screen: pygame.Surface)
 
+---\n\n\n<!-- AUTO-GENERATED: Ne pas éditer manuellement -->\n\n### Module: scene_manager\n\n### SceneManager
+
+#### Méthodes
+
+##### **__init__**(self: )
+
+##### **push_scene**(self: , scene: Scene)
+
+##### **pop_scene**(self: )
+
+##### **replace_scene**(self: , scene: Scene)
+
+##### **handle_event**(self: , event: pygame.event.Event)
+
+##### **update**(self: , dt: float)
+
+##### **render**(self: , screen: pygame.Surface)
+
+---\n\n### Module: game\n\n### Game
+
+#### Méthodes
+
+##### **__init__**(self: , width: int, height: int)
+
+##### **handle_events**(self: )
+
+##### **update**(self: , dt: float)
+
+##### **render**(self: )
+
+##### **run**(self: )
+
+---\n\n### Module: scene\n\n### Scene
+
+**Hérite de**: ABC
+
+#### Méthodes
+
+##### **__init__**(self: )
+
+##### **on_enter**(self: )
+
+##### **on_exit**(self: )
+
+##### **on_pause**(self: )
+
+##### **on_resume**(self: )
+
+##### **handle_event**(self: , event: pygame.event.Event)
+
+##### **update**(self: , dt: float)
+
+##### **render**(self: , screen: pygame.Surface)
+
 ---\n\n
