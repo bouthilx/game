@@ -5,6 +5,9 @@ from game.entities.player import Player
 from game.entities.enemy import Goblin, Ogre
 from game.world.bitmap_map import BitmapMap
 from game.world.chest import ChestManager
+from game.ui.menu import MenuManager
+from game.ui.inventory_menu import InventoryMenu
+from game.ui.equipment_menu import EquipmentMenu
 
 
 class GameScene(Scene):
@@ -25,6 +28,27 @@ class GameScene(Scene):
         # Créer quelques ennemis de test
         self.enemies = []
         self.spawn_test_enemies()
+        
+        # Initialize menu system
+        self.menu_manager = MenuManager()
+        
+        # Create menus (center them on screen)
+        screen_width, screen_height = 800, 600  # Default screen size
+        menu_width, menu_height = 400, 500
+        menu_x = (screen_width - menu_width) // 2
+        menu_y = (screen_height - menu_height) // 2
+        
+        self.inventory_menu = InventoryMenu(menu_x, menu_y, menu_width, menu_height)
+        self.inventory_menu.set_inventory(self.player.inventory)
+        
+        equipment_height = 350
+        equipment_y = (screen_height - equipment_height) // 2
+        self.equipment_menu = EquipmentMenu(menu_x, equipment_y, menu_width, equipment_height)
+        self.equipment_menu.set_player(self.player)
+        
+        # Add menus to manager
+        self.menu_manager.add_menu(self.inventory_menu)
+        self.menu_manager.add_menu(self.equipment_menu)
 
     def spawn_test_chests(self):
         """Spawn quelques coffres de test dans le monde."""
@@ -107,33 +131,56 @@ class GameScene(Scene):
             print(f"First enemy at: ({self.enemies[0].x}, {self.enemies[0].y})")
 
     def handle_event(self, event: pygame.event.Event):
+        # Let menu manager handle input first
+        if self.menu_manager.handle_input(event):
+            return  # Menu consumed the input
+        
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                pass
+                # Close any open menus
+                self.menu_manager.hide_all_menus()
+            elif event.key == pygame.K_i:
+                # Toggle inventory menu
+                if self.inventory_menu.visible:
+                    self.inventory_menu.hide()
+                else:
+                    self.menu_manager.show_menu(self.inventory_menu)
+            elif event.key == pygame.K_e and not self.menu_manager.is_any_menu_visible():
+                # Only allow equipment menu if no other menu is open
+                # and player is not trying to interact with chest
+                keys = pygame.key.get_pressed()
+                if not keys[pygame.K_e]:  # This is a key press, not held
+                    self.menu_manager.show_menu(self.equipment_menu)
             elif event.key in [pygame.K_1, pygame.K_2, pygame.K_3]:
-                # Changement d'arme
+                # Changement d'arme (works both in game and menus)
                 self.player.handle_weapon_switch(event.key)
 
     def update(self, dt: float):
         self.current_time += dt
-        self.player.update(dt, self.game_map, self.current_time, self.chest_manager)
         
-        # Mettre à jour les coffres
-        self.chest_manager.update(dt)
+        # Update menus first
+        self.menu_manager.update(dt)
         
-        # Mettre à jour les ennemis
-        for enemy in self.enemies[:]:  # Copie pour éviter modifications pendant iteration
-            if enemy.is_alive:
-                enemy.update(dt, self.current_time)
-            else:
-                # Supprimer les ennemis morts après un délai (pour effet visuel)
-                self.enemies.remove(enemy)
-        
-        # Vérifier les collisions d'attaque du joueur
-        if self.player.is_attacking:
-            xp_gained = self.player.deal_damage_to_enemies(self.enemies)
-            if xp_gained > 0:
-                self.player.gain_experience(xp_gained)
+        # Only update game if no menus are open (pause gameplay during menus)
+        if not self.menu_manager.is_any_menu_visible():
+            self.player.update(dt, self.game_map, self.current_time, self.chest_manager)
+            
+            # Mettre à jour les coffres
+            self.chest_manager.update(dt)
+            
+            # Mettre à jour les ennemis
+            for enemy in self.enemies[:]:  # Copie pour éviter modifications pendant iteration
+                if enemy.is_alive:
+                    enemy.update(dt, self.current_time)
+                else:
+                    # Supprimer les ennemis morts après un délai (pour effet visuel)
+                    self.enemies.remove(enemy)
+            
+            # Vérifier les collisions d'attaque du joueur
+            if self.player.is_attacking:
+                xp_gained = self.player.deal_damage_to_enemies(self.enemies)
+                if xp_gained > 0:
+                    self.player.gain_experience(xp_gained)
 
         screen_width = 800
         screen_height = 600
@@ -200,22 +247,32 @@ class GameScene(Scene):
         player_center_y = self.player.y + self.player.height / 2
         nearby_chest = self.chest_manager.find_interactable_chest(player_center_x, player_center_y)
         
+        # Gold display
+        gold_text = font.render(f"Gold: {self.player.gold}", True, (255, 215, 0))
+        
         # Controls info
         small_font = pygame.font.Font(None, 24)
-        controls_text = small_font.render("1/2/3: Change Weapon | SPACE: Attack | WASD: Move | E: Interact", True, (200, 200, 200))
+        if self.menu_manager.is_any_menu_visible():
+            controls_text = small_font.render("Menu Controls: See menu for specific controls", True, (200, 200, 200))
+        else:
+            controls_text = small_font.render("1/2/3: Change Weapon | SPACE: Attack | WASD: Move | E: Interact/Equipment | I: Inventory", True, (200, 200, 200))
 
         screen.blit(level_text, (10, 10))
         screen.blit(health_text, (10, 50))
         screen.blit(enemies_text, (10, 90))
         screen.blit(chest_text, (10, 130))
         screen.blit(weapon_text, (10, 170))
-        screen.blit(controls_text, (10, 210))
+        screen.blit(gold_text, (10, 210))
+        screen.blit(controls_text, (10, 250))
         
-        # Interaction prompt
-        if nearby_chest:
+        # Interaction prompt (only show if no menus are open)
+        if nearby_chest and not self.menu_manager.is_any_menu_visible():
             interaction_font = pygame.font.Font(None, 32)
             prompt_text = interaction_font.render(nearby_chest.get_interaction_prompt(), True, (255, 255, 0))
             # Center the prompt at the bottom of the screen
             prompt_x = (screen.get_width() - prompt_text.get_width()) // 2
             prompt_y = screen.get_height() - 60
             screen.blit(prompt_text, (prompt_x, prompt_y))
+        
+        # Render menus on top of everything
+        self.menu_manager.render(screen)

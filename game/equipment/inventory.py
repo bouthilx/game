@@ -5,10 +5,11 @@ from .weapon import Weapon
 class Inventory:
     """Système d'inventaire simple pour le joueur."""
     
-    def __init__(self, max_size: int = 20):
+    def __init__(self, max_size: int = 20, owner=None):
         self.max_size = max_size
         self.items: List[Weapon] = []
         self.equipped_weapon: Optional[Weapon] = None
+        self.owner = owner
     
     def add_item(self, item: Weapon) -> bool:
         """Ajoute un objet à l'inventaire. Retourne True si succès."""

@@ -1,0 +1,141 @@
+{
+  "image": "goblin_spritesheet.png",
+  "frame_size": [
+    32,
+    32
+  ],
+  "animations": {
+    "idle_down": {
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "row": 0,
+      "frame_duration": 0.2,
+      "mode": "loop"
+    },
+    "idle_up": {
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "row": 1,
+      "frame_duration": 0.2,
+      "mode": "loop"
+    },
+    "idle_left": {
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "row": 2,
+      "frame_duration": 0.2,
+      "mode": "loop"
+    },
+    "idle_right": {
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "row": 3,
+      "frame_duration": 0.2,
+      "mode": "loop"
+    },
+    "walk_down": {
+      "frames": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "row": 0,
+      "frame_duration": 0.15,
+      "mode": "loop"
+    },
+    "walk_up": {
+      "frames": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "row": 1,
+      "frame_duration": 0.15,
+      "mode": "loop"
+    },
+    "walk_left": {
+      "frames": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "row": 2,
+      "frame_duration": 0.15,
+      "mode": "loop"
+    },
+    "walk_right": {
+      "frames": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "row": 3,
+      "frame_duration": 0.15,
+      "mode": "loop"
+    },
+    "attack_down": {
+      "frames": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "row": 0,
+      "frame_duration": 0.1,
+      "mode": "once"
+    },
+    "attack_up": {
+      "frames": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "row": 1,
+      "frame_duration": 0.1,
+      "mode": "once"
+    },
+    "attack_left": {
+      "frames": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "row": 2,
+      "frame_duration": 0.1,
+      "mode": "once"
+    },
+    "attack_right": {
+      "frames": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "row": 3,
+      "frame_duration": 0.1,
+      "mode": "once"
+    }
+  }
+}

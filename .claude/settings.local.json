@@ -9,7 +9,9 @@
       "Bash(uv add:*)",
       "Bash(timeout 5 uv run:*)",
       "Bash(timeout 3s uv run:*)",
-      "Bash(timeout 5s uv run:*)"
+      "Bash(timeout 5s uv run:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

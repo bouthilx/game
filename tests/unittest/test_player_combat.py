@@ -85,6 +85,8 @@ class TestPlayerCombat:
             mock_keys.return_value = key_state
             
             self.player.handle_input(0)
+            # Need to update movement animation to trigger direction change
+            self.player.update_movement_animation(self.player.velocity_x, self.player.velocity_y)
             assert self.player.facing_direction == "right"
             
             # Mouvement vers la gauche
@@ -92,6 +94,8 @@ class TestPlayerCombat:
             key_state[pygame.K_LEFT] = True
             
             self.player.handle_input(0)
+            # Need to update movement animation to trigger direction change
+            self.player.update_movement_animation(self.player.velocity_x, self.player.velocity_y)
             assert self.player.facing_direction == "left"
 
     def test_get_attack_rect_different_directions(self):

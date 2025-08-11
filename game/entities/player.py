@@ -1,22 +1,28 @@
 import pygame
 
-from game.entities.entity import Entity
+from .animated_entity import AnimatedEntity, AnimationState
 from game.equipment.inventory import Inventory
 from game.equipment.weapon import BasicSword, SteelSword, LegendarySword
 
 
-class Player(Entity):
+class Player(AnimatedEntity):
     def __init__(self, x: float = 0, y: float = 0):
-        super().__init__(x, y, 32, 32)
+        # Initialize with player sprite sheet
+        super().__init__(
+            x, y, 32, 32, 
+            sprite_sheet_path="characters/player/player_spritesheet.png",
+            fallback_color=(0, 128, 255)  # Blue fallback
+        )
         self.speed = 150.0
         self.health = 100
         self.max_health = 100
         self.level = 1
         self.experience = 0
         self.experience_to_next_level = 100
+        self.gold = 100  # Starting gold amount
         
         # Equipment and inventory system
-        self.inventory = Inventory(max_size=20)
+        self.inventory = Inventory(max_size=20, owner=self)
         self.base_attack_damage = 10  # Dégâts de base sans arme
         
         # Ajouter différentes épées à l'inventaire pour tester
@@ -32,12 +38,11 @@ class Player(Entity):
         self.inventory.equip_weapon(basic_sword)
         
         # Combat system
-        self.attack_range = 40
+        self.attack_range = 25
         self.attack_cooldown = 0.5  # seconds
         self.last_attack_time = -1  # Initialize to -1 so first attack works
-        self.facing_direction = "down"  # down, up, left, right
         self.is_attacking = False
-        self.attack_animation_time = 0.2  # seconds
+        self.attack_animation_time = 0.4  # 4 frames * 0.1 seconds per frame
         self.attack_start_time = 0
         self.enemies_hit_this_attack = set()  # Track enemies hit in current attack
 
@@ -50,16 +55,12 @@ class Player(Entity):
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.velocity_x = -self.speed
-            self.facing_direction = "left"
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.velocity_x = self.speed
-            self.facing_direction = "right"
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             self.velocity_y = -self.speed
-            self.facing_direction = "up"
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.velocity_y = self.speed
-            self.facing_direction = "down"
 
         # Attack input
         if keys[pygame.K_SPACE] and self.can_attack(current_time):
@@ -114,6 +115,24 @@ class Player(Entity):
         """Ajoute un objet à l'inventaire."""
         return self.inventory.add_item(item)
 
+    def add_gold(self, amount: int):
+        """Ajoute de l'or au joueur."""
+        if amount > 0:
+            self.gold += amount
+            return True
+        return False
+
+    def spend_gold(self, amount: int) -> bool:
+        """Dépense de l'or si le joueur en a assez."""
+        if self.gold >= amount:
+            self.gold -= amount
+            return True
+        return False
+
+    def get_gold(self) -> int:
+        """Retourne la quantité d'or actuelle."""
+        return self.gold
+
     def try_interact_with_chest(self, chest_manager):
         """Essaie d'interagir avec un coffre proche."""
         # Utiliser le centre du joueur pour l'interaction
@@ -136,6 +155,8 @@ class Player(Entity):
         self.attack_start_time = current_time
         self.last_attack_time = current_time
         self.enemies_hit_this_attack.clear()  # Reset for new attack
+        # Play attack animation
+        self.play_attack_animation()
 
     def get_attack_rect(self) -> pygame.Rect:
         """Get the rectangle representing the attack area."""
@@ -165,6 +186,8 @@ class Player(Entity):
         if self.is_attacking:
             if current_time - self.attack_start_time >= self.attack_animation_time:
                 self.is_attacking = False
+                # Return to idle animation when attack finishes
+                self.set_animation_state(AnimationState.IDLE)
 
     def check_attack_hits(self, enemies: list) -> list:
         """Vérifie si l'attaque touche des ennemis. Retourne la liste des ennemis touchés."""
@@ -218,6 +241,12 @@ class Player(Entity):
         self.handle_input(current_time, chest_manager)
         self.update_attack_state(current_time)
 
+        # Update movement animations based on velocity
+        self.update_movement_animation(self.velocity_x, self.velocity_y)
+        
+        # Update animation frames
+        self.update_animation(dt)
+
         if game_map:
             new_x = self.x + self.velocity_x * dt
             new_y = self.y + self.velocity_y * dt
@@ -227,13 +256,14 @@ class Player(Entity):
             if self.can_move_to(self.x, new_y, game_map):
                 self.y = new_y
         else:
+            # Update base velocity/position
+            old_x, old_y = self.x, self.y
             super().update(dt)
+            # Update animations based on actual movement
+            actual_vel_x = (self.x - old_x) / dt if dt > 0 else 0
+            actual_vel_y = (self.y - old_y) / dt if dt > 0 else 0
+            self.update_movement_animation(actual_vel_x, actual_vel_y)
 
     def render(self, screen: pygame.Surface):
-        # Render player
-        pygame.draw.rect(screen, (0, 128, 255), self.rect)
-        
-        # Render attack area if attacking
-        if self.is_attacking:
-            attack_rect = self.get_attack_rect()
-            pygame.draw.rect(screen, (255, 255, 0), attack_rect, 3)  # Yellow outline
+        # Use AnimatedEntity's render method for sprites
+        super().render(screen)

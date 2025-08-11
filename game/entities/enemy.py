@@ -1,14 +1,22 @@
 import pygame
 import math
 
-from game.entities.entity import Entity
+from .animated_entity import AnimatedEntity, AnimationState
 
 
-class Enemy(Entity):
+class Enemy(AnimatedEntity):
     """Classe de base pour tous les ennemis."""
     
-    def __init__(self, x: float, y: float, width: int = 32, height: int = 32):
-        super().__init__(x, y, width, height)
+    def __init__(
+        self, 
+        x: float, 
+        y: float, 
+        width: int = 32, 
+        height: int = 32,
+        sprite_sheet_path: str = None,
+        fallback_color: tuple[int, int, int] = (128, 128, 128)
+    ):
+        super().__init__(x, y, width, height, sprite_sheet_path, fallback_color)
         
         # Stats de base
         self.health = 30
@@ -87,6 +95,9 @@ class Enemy(Entity):
         else:
             self.velocity_x = 0
             self.velocity_y = 0
+        
+        # Update animation based on movement
+        self.update_movement_animation(self.velocity_x, self.velocity_y)
     
     def update_ai(self, dt: float, current_time: float):
         """Met à jour l'IA de l'ennemi."""
@@ -126,6 +137,8 @@ class Enemy(Entity):
         if self.target and self.distance_to_target() <= self.attack_range:
             self.target.take_damage(self.attack_damage)
             self.last_attack_time = current_time
+            # Play attack animation
+            self.play_attack_animation()
     
     def check_collision_with_attack(self, attack_rect: pygame.Rect) -> bool:
         """Vérifie si l'ennemi est touché par une attaque."""
@@ -138,8 +151,17 @@ class Enemy(Entity):
         if not self.is_alive:
             return
         
+        # Store old position for animation
+        old_x, old_y = self.x, self.y
+        
         # Mettre à jour l'IA
         self.update_ai(dt, current_time)
+        
+        # Update movement animations based on velocity
+        self.update_movement_animation(self.velocity_x, self.velocity_y)
+        
+        # Update animation frames
+        self.update_animation(dt)
         
         # Appliquer le mouvement (hérité de Entity)
         super().update(dt)
@@ -149,14 +171,8 @@ class Enemy(Entity):
         if not self.is_alive:
             return
         
-        # Dessiner l'ennemi (couleur selon état)
-        color = self.color
-        if self.ai_state == "chase":
-            color = (255, 150, 150)  # Plus clair quand en poursuite
-        elif self.ai_state == "attack":
-            color = (255, 0, 0)  # Rouge vif quand attaque
-        
-        pygame.draw.rect(screen, color, self.rect)
+        # Use AnimatedEntity's render method for sprites
+        super().render(screen)
         
         # Barre de vie (adaptée à la taille de l'ennemi)
         if self.health < self.max_health:
@@ -184,7 +200,11 @@ class Goblin(Enemy):
     """Ennemi Gobelin - rapide avec peu de vie."""
     
     def __init__(self, x: float, y: float):
-        super().__init__(x, y, 24, 24)  # Plus petit
+        super().__init__(
+            x, y, 32, 32,  # Use 32x32 to match sprite size
+            sprite_sheet_path="characters/goblin/goblin_spritesheet.png",
+            fallback_color=(100, 255, 100)  # Green fallback
+        )
         
         # Stats spécifiques au gobelin
         self.health = 20
@@ -193,16 +213,17 @@ class Goblin(Enemy):
         self.attack_damage = 8  # Moins de dégâts
         self.experience_value = 15  # Moins d'XP
         self.attack_cooldown = 0.8  # Attaque plus souvent
-        
-        # Couleur spécifique
-        self.color = (100, 255, 100)  # Vert pour gobelin
 
 
 class Ogre(Enemy):
     """Ennemi Ogre - très résistant et plus gros."""
     
     def __init__(self, x: float, y: float):
-        super().__init__(x, y, 64, 64)  # 2x plus gros (64x64 vs 32x32)
+        super().__init__(
+            x, y, 64, 64,  # 2x plus gros (64x64 vs 32x32)
+            sprite_sheet_path="characters/ogre/ogre_spritesheet.png",  # Will fall back to color for now
+            fallback_color=(200, 100, 100)  # Rouge-brun pour ogre
+        )
         
         # Stats spécifiques à l'ogre
         self.health = 100
@@ -213,6 +234,3 @@ class Ogre(Enemy):
         self.attack_cooldown = 1.5  # Attaque plus lentement
         self.detection_radius = 120  # Détection légèrement meilleure
         self.attack_range = 50  # Portée d'attaque plus grande
-        
-        # Couleur spécifique
-        self.color = (200, 100, 100)  # Rouge-brun pour ogre
