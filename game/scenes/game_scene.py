@@ -8,6 +8,7 @@ from game.world.chest import ChestManager
 from game.ui.menu import MenuManager
 from game.ui.inventory_menu import InventoryMenu
 from game.ui.equipment_menu import EquipmentMenu
+from game.systems.sound_manager import get_sound_manager
 
 
 class GameScene(Scene):
@@ -49,6 +50,11 @@ class GameScene(Scene):
         # Add menus to manager
         self.menu_manager.add_menu(self.inventory_menu)
         self.menu_manager.add_menu(self.equipment_menu)
+        
+        # Initialize sound and music
+        self.sound_manager = get_sound_manager()
+        # Start with exploration music (calmer background music)
+        self.sound_manager.load_background_music("exploration_theme.wav")
 
     def spawn_test_chests(self):
         """Spawn quelques coffres de test dans le monde."""
@@ -154,6 +160,17 @@ class GameScene(Scene):
             elif event.key in [pygame.K_1, pygame.K_2, pygame.K_3]:
                 # Changement d'arme (works both in game and menus)
                 self.player.handle_weapon_switch(event.key)
+            elif event.key == pygame.K_m:
+                # Toggle mute all audio
+                self.sound_manager.toggle_mute()
+            elif event.key == pygame.K_MINUS:
+                # Decrease music volume
+                current_volume = self.sound_manager.music_volume
+                self.sound_manager.set_music_volume(max(0.0, current_volume - 0.1))
+            elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
+                # Increase music volume (+ key or = key without shift)
+                current_volume = self.sound_manager.music_volume
+                self.sound_manager.set_music_volume(min(1.0, current_volume + 0.1))
 
     def update(self, dt: float):
         self.current_time += dt
@@ -168,13 +185,10 @@ class GameScene(Scene):
             # Mettre à jour les coffres
             self.chest_manager.update(dt)
             
-            # Mettre à jour les ennemis
+            # Mettre à jour les ennemis (alive and corpses for animations)
             for enemy in self.enemies[:]:  # Copie pour éviter modifications pendant iteration
-                if enemy.is_alive:
-                    enemy.update(dt, self.current_time)
-                else:
-                    # Supprimer les ennemis morts après un délai (pour effet visuel)
-                    self.enemies.remove(enemy)
+                # Pass player and other enemies for collision detection
+                enemy.update(dt, self.current_time, self.game_map, self.chest_manager, self.player, self.enemies)
             
             # Vérifier les collisions d'attaque du joueur
             if self.player.is_attacking:
@@ -197,8 +211,26 @@ class GameScene(Scene):
         
         # Render chests
         self.chest_manager.render_all(screen, self.camera_x, self.camera_y)
+        
+        # Render corpses first (underneath everything)
+        for enemy in self.enemies:
+            if enemy.is_corpse:
+                enemy_screen_x = enemy.x - self.camera_x
+                enemy_screen_y = enemy.y - self.camera_y
+                
+                # Save position and render with camera offset
+                old_enemy_x, old_enemy_y = enemy.x, enemy.y
+                enemy.x = enemy_screen_x
+                enemy.y = enemy_screen_y
+                
+                # Render blood puddle first (underneath corpse)
+                enemy.render_blood_puddle(screen)
+                # Then render corpse sprite
+                enemy.render(screen)
+                
+                enemy.x, enemy.y = old_enemy_x, old_enemy_y
 
-        # Render player on top of objects
+        # Render player on top of objects and corpses
         player_screen_x = self.player.x - self.camera_x
         player_screen_y = self.player.y - self.camera_y
 
@@ -209,9 +241,9 @@ class GameScene(Scene):
         self.player.render(screen)
         self.player.x, self.player.y = old_x, old_y
         
-        # Render enemies
+        # Render living enemies and dying enemies (playing death animation) on top
         for enemy in self.enemies:
-            if enemy.is_alive:
+            if enemy.is_alive or (not enemy.is_alive and not enemy.is_corpse):  # Alive or dying
                 enemy_screen_x = enemy.x - self.camera_x
                 enemy_screen_y = enemy.y - self.camera_y
                 
@@ -253,9 +285,9 @@ class GameScene(Scene):
         # Controls info
         small_font = pygame.font.Font(None, 24)
         if self.menu_manager.is_any_menu_visible():
-            controls_text = small_font.render("Menu Controls: See menu for specific controls", True, (200, 200, 200))
+            controls_text = small_font.render("Menu Controls: See menu for specific controls | M: Mute | +/-: Volume", True, (200, 200, 200))
         else:
-            controls_text = small_font.render("1/2/3: Change Weapon | SPACE: Attack | WASD: Move | E: Interact/Equipment | I: Inventory", True, (200, 200, 200))
+            controls_text = small_font.render("1/2/3: Weapon | SPACE: Attack | WASD: Move | E: Interact/Equipment | I: Inventory | M: Mute | +/-: Volume", True, (200, 200, 200))
 
         screen.blit(level_text, (10, 10))
         screen.blit(health_text, (10, 50))

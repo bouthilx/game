@@ -1,0 +1,36 @@
+{
+  "image": "chest_spritesheet.png",
+  "frame_size": [
+    32,
+    32
+  ],
+  "animations": {
+    "closed": {
+      "frames": [
+        0
+      ],
+      "row": 0,
+      "frame_duration": 1.0,
+      "mode": "loop"
+    },
+    "open": {
+      "frames": [
+        1
+      ],
+      "row": 0,
+      "frame_duration": 1.0,
+      "mode": "loop"
+    },
+    "opening": {
+      "frames": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "row": 0,
+      "frame_duration": 0.15,
+      "mode": "once"
+    }
+  }
+}

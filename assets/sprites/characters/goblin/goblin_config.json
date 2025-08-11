@@ -136,6 +136,50 @@
       "row": 3,
       "frame_duration": 0.12,
       "mode": "once"
+    },
+    "death_down": {
+      "frames": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "row": 0,
+      "frame_duration": 0.3,
+      "mode": "once"
+    },
+    "death_up": {
+      "frames": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "row": 1,
+      "frame_duration": 0.3,
+      "mode": "once"
+    },
+    "death_left": {
+      "frames": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "row": 2,
+      "frame_duration": 0.3,
+      "mode": "once"
+    },
+    "death_right": {
+      "frames": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "row": 3,
+      "frame_duration": 0.3,
+      "mode": "once"
     }
   }
 }

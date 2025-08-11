@@ -82,7 +82,15 @@ class SpriteSheet:
         
         # Make path relative to config file location
         if not Path(image_path).is_absolute():
-            image_path = str(config_file.parent / image_path)
+            full_image_path = config_file.parent / image_path
+            # Convert to path relative to assets/sprites/ for SpriteManager
+            assets_sprites_path = Path("assets/sprites")
+            try:
+                # Get relative path from assets/sprites to the image
+                image_path = str(full_image_path.relative_to(assets_sprites_path))
+            except ValueError:
+                # If not under assets/sprites, use the full path
+                image_path = str(full_image_path)
         
         frame_size = tuple(config.get("frame_size", [32, 32]))
         self.sheet_surface = self.sprite_manager.load_sprite(image_path)
@@ -319,7 +327,7 @@ class CharacterSpriteSheet:
                     
                     if anim_frames:  # Only create animation if we have frames
                         # Determine animation mode
-                        mode = AnimationMode.LOOP if anim_type != "attack" else AnimationMode.ONCE
+                        mode = AnimationMode.LOOP if anim_type not in ["attack", "death"] else AnimationMode.ONCE
                         
                         animations[anim_type][direction] = Animation(
                             frames=anim_frames,

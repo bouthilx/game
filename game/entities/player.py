@@ -2,7 +2,8 @@ import pygame
 
 from .animated_entity import AnimatedEntity, AnimationState
 from game.equipment.inventory import Inventory
-from game.equipment.weapon import BasicSword, SteelSword, LegendarySword
+from game.equipment.weapon import BasicSword, SteelSword, LegendarySword, MagicStaff, ElvenBow
+from game.systems.sound_manager import play_attack_sound, play_hurt_sound
 
 
 class Player(AnimatedEntity):
@@ -25,14 +26,18 @@ class Player(AnimatedEntity):
         self.inventory = Inventory(max_size=20, owner=self)
         self.base_attack_damage = 10  # Dégâts de base sans arme
         
-        # Ajouter différentes épées à l'inventaire pour tester
+        # Ajouter différentes armes à l'inventaire pour tester
         basic_sword = BasicSword()
         steel_sword = SteelSword()
         legendary_sword = LegendarySword()
+        magic_staff = MagicStaff()
+        elven_bow = ElvenBow()
         
         self.inventory.add_item(basic_sword)
         self.inventory.add_item(steel_sword)
         self.inventory.add_item(legendary_sword)
+        self.inventory.add_item(magic_staff)
+        self.inventory.add_item(elven_bow)
         
         # Équiper l'épée de base au démarrage
         self.inventory.equip_weapon(basic_sword)
@@ -82,7 +87,21 @@ class Player(AnimatedEntity):
             self.inventory.equip_weapon(weapons[2])
 
     def take_damage(self, damage: int):
+        """Take damage and play appropriate hurt sound."""
+        previous_health = self.health
         self.health = max(0, self.health - damage)
+        
+        # Determine damage severity and play appropriate sound
+        if self.health <= 0:
+            # Player died
+            play_hurt_sound("death")
+        elif damage >= 30 or self.health <= self.max_health * 0.2:
+            # Critical damage (high damage or low health)
+            play_hurt_sound("critical")
+        else:
+            # Normal damage
+            play_hurt_sound("normal")
+        
         return self.health <= 0
 
     def heal(self, amount: int):
@@ -94,11 +113,16 @@ class Player(AnimatedEntity):
             self.level_up()
 
     def level_up(self):
+        """Level up the player and play victory sound."""
         self.experience -= self.experience_to_next_level
         self.level += 1
         self.max_health += 10
         self.health = self.max_health
         self.experience_to_next_level = int(self.experience_to_next_level * 1.5)
+        
+        # Play victory sound for leveling up
+        from game.systems.sound_manager import get_sound_manager
+        get_sound_manager().play_sound("victory")
 
     def get_attack_damage(self) -> int:
         """Calcule les dégâts d'attaque en fonction de l'arme équipée."""
@@ -155,6 +179,16 @@ class Player(AnimatedEntity):
         self.attack_start_time = current_time
         self.last_attack_time = current_time
         self.enemies_hit_this_attack.clear()  # Reset for new attack
+        
+        # Play attack sound based on equipped weapon
+        equipped_weapon = self.inventory.get_equipped_weapon()
+        if equipped_weapon:
+            weapon_type = equipped_weapon.weapon_type
+        else:
+            weapon_type = "sword"  # Default fallback
+        
+        play_attack_sound(weapon_type)
+        
         # Play attack animation
         self.play_attack_animation()
 
@@ -223,7 +257,7 @@ class Player(AnimatedEntity):
         
         return total_xp
 
-    def can_move_to(self, x: float, y: float, game_map) -> bool:
+    def can_move_to(self, x: float, y: float, game_map, chest_manager=None) -> bool:
         margin = 2
         corners = [
             (x + margin, y + margin),
@@ -235,6 +269,17 @@ class Player(AnimatedEntity):
         for corner_x, corner_y in corners:
             if not game_map.is_walkable(corner_x, corner_y):
                 return False
+        
+        # Check chest collisions if chest_manager provided
+        if chest_manager:
+            # Create a rect for the new position
+            player_rect = pygame.Rect(x, y, self.width, self.height)
+            
+            # Check collision with all chests
+            for chest in chest_manager.chests:
+                if player_rect.colliderect(chest.rect):
+                    return False
+        
         return True
 
     def update(self, dt: float, game_map=None, current_time: float = 0, chest_manager=None):
@@ -251,9 +296,9 @@ class Player(AnimatedEntity):
             new_x = self.x + self.velocity_x * dt
             new_y = self.y + self.velocity_y * dt
 
-            if self.can_move_to(new_x, self.y, game_map):
+            if self.can_move_to(new_x, self.y, game_map, chest_manager):
                 self.x = new_x
-            if self.can_move_to(self.x, new_y, game_map):
+            if self.can_move_to(self.x, new_y, game_map, chest_manager):
                 self.y = new_y
         else:
             # Update base velocity/position

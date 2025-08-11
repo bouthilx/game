@@ -4,6 +4,7 @@ import pygame
 
 from game.engine.scene_manager import SceneManager
 from game.scenes.game_scene import GameScene
+from game.systems.sound_manager import get_sound_manager
 
 
 class Game:
@@ -17,6 +18,9 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
         self.fps = 60
+
+        # Initialize sound manager
+        self.sound_manager = get_sound_manager()
 
         self.scene_manager = SceneManager()
         self.scene_manager.push_scene(GameScene())
@@ -44,5 +48,7 @@ class Game:
             self.update(dt)
             self.render()
 
+        # Clean up sound manager
+        self.sound_manager.cleanup()
         pygame.quit()
         sys.exit()

@@ -5,7 +5,7 @@ from enum import Enum
 from .entity import Entity
 from game.graphics.sprite_manager import SpriteManager
 from game.graphics.animation import AnimationSet
-from game.graphics.sprite_sheet import CharacterSpriteSheet
+from game.graphics.sprite_sheet import CharacterSpriteSheet, SpriteSheet
 
 
 class AnimationState(Enum):
@@ -60,11 +60,19 @@ class AnimatedEntity(Entity):
             return
         
         try:
+            # Standard character sprite loading (works for all characters)
             character_sheet = CharacterSpriteSheet(self.sprite_manager)
+            
+            # For goblins and ogres, include death animations
+            if "goblin" in self.sprite_sheet_path or "ogre" in self.sprite_sheet_path:
+                animation_types = ["idle", "walk", "attack", "death"]
+            else:
+                animation_types = ["idle", "walk", "attack"]
+            
             animations = character_sheet.load_character_animations(
                 self.sprite_sheet_path,
                 (self.width, self.height),
-                ["idle", "walk", "attack"]
+                animation_types
             )
             
             # Add all animations to the set
@@ -117,6 +125,10 @@ class AnimatedEntity(Entity):
         if not force and self.animation_state == state:
             return
         
+        # Log animation state changes for debugging
+        if hasattr(self, '_debug_id'):  # Only for enemies we're tracking
+            print(f"ANIM: Entity {self._debug_id} changing from {self.animation_state.value} to {state.value}")
+        
         self.last_animation_state = self.animation_state
         self.animation_state = state
         self._update_animation()
@@ -143,16 +155,17 @@ class AnimatedEntity(Entity):
         """Update current animation based on state and direction."""
         animation_name = f"{self.animation_state.value}_{self.facing_direction}"
         
-        # For attack animations, don't restart if already playing
-        restart = self.animation_state != AnimationState.ATTACK
+        # For attack and death animations, don't restart if already playing
+        restart = self.animation_state not in [AnimationState.ATTACK, AnimationState.DEATH]
         
         # Try to play the specific animation
         if not self.animation_set.play_animation(animation_name, restart=restart):
             # Fallback to just the state if direction-specific doesn't exist
             if not self.animation_set.play_animation(self.animation_state.value, restart=restart):
-                # Ultimate fallback
-                if not self.animation_set.play_animation("idle_down", restart=restart):
-                    self.animation_set.play_animation("fallback", restart=restart)
+                # Ultimate fallback (but not for death animations)
+                if self.animation_state != AnimationState.DEATH:
+                    if not self.animation_set.play_animation("idle_down", restart=restart):
+                        self.animation_set.play_animation("fallback", restart=restart)
     
     def update_animation(self, dt: float) -> Optional[pygame.Surface]:
         """
@@ -179,6 +192,13 @@ class AnimatedEntity(Entity):
             velocity_x: Horizontal velocity
             velocity_y: Vertical velocity
         """
+        # Don't override special animations (attack, death, hurt)
+        if self.animation_state in [AnimationState.ATTACK, AnimationState.DEATH, AnimationState.HURT]:
+            # Log attempts to override death animation
+            if self.animation_state == AnimationState.DEATH and (abs(velocity_x) > 0.1 or abs(velocity_y) > 0.1):
+                print(f"ANIM: Blocked movement animation override on DEATH state (vel: {velocity_x:.1f}, {velocity_y:.1f})")
+            return
+        
         # Determine if moving
         is_moving = abs(velocity_x) > 0.1 or abs(velocity_y) > 0.1
         
@@ -205,9 +225,21 @@ class AnimatedEntity(Entity):
         animation_name = f"{AnimationState.ATTACK.value}_{self.facing_direction}"
         self.animation_set.play_animation(animation_name, restart=True)
     
+    def play_death_animation(self):
+        """Play death animation once."""
+        self.set_animation_state(AnimationState.DEATH, force=True)
+        # Force restart the animation to play from beginning
+        animation_name = f"{AnimationState.DEATH.value}_{self.facing_direction}"
+        self.animation_set.play_animation(animation_name, restart=True)
+    
     def is_attack_animation_finished(self) -> bool:
         """Check if attack animation has finished."""
         return (self.animation_state == AnimationState.ATTACK and 
+                self.animation_set.is_current_animation_finished())
+    
+    def is_death_animation_finished(self) -> bool:
+        """Check if death animation has finished."""
+        return (self.animation_state == AnimationState.DEATH and 
                 self.animation_set.is_current_animation_finished())
     
     def render(self, screen: pygame.Surface):
@@ -243,6 +275,8 @@ class AnimatedEntity(Entity):
         # Auto-transition from attack back to idle
         if self.is_attack_animation_finished():
             self.set_animation_state(AnimationState.IDLE)
+        
+        # Death animation stays on death (no transition back)
     
     def has_animation(self, animation_name: str) -> bool:
         """Check if entity has a specific animation."""
