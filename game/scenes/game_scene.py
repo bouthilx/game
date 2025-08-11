@@ -8,6 +8,9 @@ from game.world.chest import ChestManager
 from game.ui.menu import MenuManager
 from game.ui.inventory_menu import InventoryMenu
 from game.ui.equipment_menu import EquipmentMenu
+from game.ui.main_menu import MainMenu
+from game.ui.controls_menu import ControlsMenu
+from game.ui.config_menu import ConfigMenu
 from game.systems.sound_manager import get_sound_manager
 
 
@@ -47,14 +50,38 @@ class GameScene(Scene):
         self.equipment_menu = EquipmentMenu(menu_x, equipment_y, menu_width, equipment_height)
         self.equipment_menu.set_player(self.player)
         
-        # Add menus to manager
-        self.menu_manager.add_menu(self.inventory_menu)
-        self.menu_manager.add_menu(self.equipment_menu)
-        
-        # Initialize sound and music
+        # Initialize sound and music first
         self.sound_manager = get_sound_manager()
         # Start with exploration music (calmer background music)
         self.sound_manager.load_background_music("exploration_theme.wav")
+        
+        # Create main game menus
+        self.main_menu = MainMenu(menu_x, menu_y, menu_width, menu_height)
+        self.controls_menu = ControlsMenu(menu_x, menu_y, menu_width, menu_height)
+        self.config_menu = ConfigMenu(menu_x, menu_y, menu_width, menu_height)
+        
+        # Set up menu callbacks
+        self.main_menu.on_resume = self._resume_game
+        self.main_menu.on_controls = self._show_controls
+        self.main_menu.on_config = self._show_config
+        self.main_menu.on_save = self._save_game
+        
+        self.controls_menu.on_back = self._show_main_menu
+        self.config_menu.on_back = self._show_main_menu
+        
+        # Set up config menu volume callbacks
+        self.config_menu.on_music_volume_change = self._set_music_volume
+        self.config_menu.on_sfx_volume_change = self._set_sfx_volume
+        
+        # Initialize config menu with current volumes
+        self.config_menu.set_volumes(self.sound_manager.music_volume, self.sound_manager.sfx_volume)
+        
+        # Add menus to manager
+        self.menu_manager.add_menu(self.inventory_menu)
+        self.menu_manager.add_menu(self.equipment_menu)
+        self.menu_manager.add_menu(self.main_menu)
+        self.menu_manager.add_menu(self.controls_menu)
+        self.menu_manager.add_menu(self.config_menu)
 
     def spawn_test_chests(self):
         """Spawn quelques coffres de test dans le monde."""
@@ -143,8 +170,11 @@ class GameScene(Scene):
         
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                # Close any open menus
-                self.menu_manager.hide_all_menus()
+                # Show main menu if no menus are open, otherwise close current menu
+                if not self.menu_manager.is_any_menu_visible():
+                    self.menu_manager.show_menu(self.main_menu)
+                else:
+                    self.menu_manager.hide_all_menus()
             elif event.key == pygame.K_i:
                 # Toggle inventory menu
                 if self.inventory_menu.visible:
@@ -282,12 +312,9 @@ class GameScene(Scene):
         # Gold display
         gold_text = font.render(f"Gold: {self.player.gold}", True, (255, 215, 0))
         
-        # Controls info
+        # Menu info
         small_font = pygame.font.Font(None, 24)
-        if self.menu_manager.is_any_menu_visible():
-            controls_text = small_font.render("Menu Controls: See menu for specific controls | M: Mute | +/-: Volume", True, (200, 200, 200))
-        else:
-            controls_text = small_font.render("1/2/3: Weapon | SPACE: Attack | WASD: Move | E: Interact/Equipment | I: Inventory | M: Mute | +/-: Volume", True, (200, 200, 200))
+        menu_text = small_font.render("ESC: Menu", True, (200, 200, 200))
 
         screen.blit(level_text, (10, 10))
         screen.blit(health_text, (10, 50))
@@ -295,7 +322,7 @@ class GameScene(Scene):
         screen.blit(chest_text, (10, 130))
         screen.blit(weapon_text, (10, 170))
         screen.blit(gold_text, (10, 210))
-        screen.blit(controls_text, (10, 250))
+        screen.blit(menu_text, (10, 250))
         
         # Interaction prompt (only show if no menus are open)
         if nearby_chest and not self.menu_manager.is_any_menu_visible():
@@ -308,3 +335,36 @@ class GameScene(Scene):
         
         # Render menus on top of everything
         self.menu_manager.render(screen)
+    
+    # Menu callback methods
+    def _resume_game(self):
+        """Resume the game by closing all menus."""
+        self.menu_manager.hide_all_menus()
+    
+    def _show_main_menu(self):
+        """Show the main menu."""
+        self.menu_manager.show_menu(self.main_menu)
+    
+    def _show_controls(self):
+        """Show the controls menu."""
+        self.menu_manager.show_menu(self.controls_menu)
+    
+    def _show_config(self):
+        """Show the config menu."""
+        # Update volumes in case they changed through other means
+        self.config_menu.set_volumes(self.sound_manager.music_volume, self.sound_manager.sfx_volume)
+        self.menu_manager.show_menu(self.config_menu)
+    
+    def _save_game(self):
+        """Save the game (placeholder for now)."""
+        print("Save game functionality not implemented yet.")
+        # For now, just resume the game
+        self._resume_game()
+    
+    def _set_music_volume(self, volume: float):
+        """Set the music volume."""
+        self.sound_manager.set_music_volume(volume)
+    
+    def _set_sfx_volume(self, volume: float):
+        """Set the sound effects volume."""
+        self.sound_manager.set_sfx_volume(volume)

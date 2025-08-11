@@ -110,17 +110,21 @@ class Menu(ABC):
         # Draw border
         pygame.draw.rect(screen, self.border_color, (self.x, self.y, self.width, self.height), 2)
 
-    def draw_title(self, screen: pygame.Surface):
-        """Draw menu title."""
+    def draw_title(self, screen: pygame.Surface) -> int:
+        """Draw menu title and return the Y position where content should start."""
         title_text = self.title_font.render(self.title, True, self.title_color)
         title_x = self.x + (self.width - title_text.get_width()) // 2
         title_y = self.y + 10
         screen.blit(title_text, (title_x, title_y))
 
         # Draw underline
-        line_start = (self.x + 20, title_y + title_text.get_height() + 5)
-        line_end = (self.x + self.width - 20, title_y + title_text.get_height() + 5)
+        line_y = title_y + title_text.get_height() + 5
+        line_start = (self.x + 20, line_y)
+        line_end = (self.x + self.width - 20, line_y)
         pygame.draw.line(screen, self.title_color, line_start, line_end, 2)
+        
+        # Return Y position where content should start
+        return line_y + 5
 
     def get_content_area(self) -> Tuple[int, int, int, int]:
         """Get the content area (x, y, width, height) excluding title."""
